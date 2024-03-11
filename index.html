@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encontre Seu Travesseiro Ideal</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .fora-de-estoque {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<img src="altenburg.png" alt="Logo Altenburg" class="logo">
+<h2>Descubra o travesseiro Altenburg perfeito para você!</h2>
+
+<div id="questionario"></div>
+<div id="recomendacao"></div>
+
+<script>
+async function carregarTravesseiros() {
+    const response = await fetch('travesseiros.json');
+    const data = await response.json();
+    iniciarQuestionario(data.travesseiros);
+}
+
+function iniciarQuestionario(travesseiros) {
+    const questionarioDiv = document.getElementById('questionario');
+    let htmlContent = '';
+
+    // Pergunta 1: Preferência de material
+    htmlContent += `
+        <div class="pergunta" id="pergunta-material">
+            <p>Qual a sua preferência de material?</p>
+            <select id="resposta-material" class="resposta">
+                <option value="">Selecione</option>
+                <option value="fibra">Fibra</option>
+                <option value="gel">Gel</option>
+                <option value="látex">Látex</option>
+                <option value="pluma">Pluma</option>
+                <option value="viscoelástico">Viscoelástico</option>
+                <option value="algodão">Algodão</option>
+                <option value="seda">Seda</option>
+                <option value="suporte extra">Suporte extra</option>
+            </select>
+        </div>
+    `;
+
+    // Pergunta 2: Posição ao dormir
+    htmlContent += `
+        <div class="pergunta" id="pergunta-posicao">
+            <p>Qual sua posição predominante ao dormir?</p>
+            <select id="resposta-posicao" class="resposta">
+                <option value="">Selecione</option>
+                <option value="De costas">De costas</option>
+                <option value="De lado">De lado</option>
+                <option value="Variada">Variada</option>
+            </select>
+        </div>
+    `;
+
+    // Pergunta 3: Preferência de conforto
+    htmlContent += `
+        <div class="pergunta" id="pergunta-conforto">
+            <p>Qual a sua preferência de conforto?</p>
+            <select id="resposta-conforto" class="resposta">
+                <option value="">Selecione</option>
+                <option value="Linha Luxo">Luxo</option>
+                <option value="Linha Terapia">Terapia</option>
+                <option value="Linha Suporte">Suporte</option>
+                <option value="Sono e Saúde">Sono e Saúde</option>
+                <option value="Básico">Básico</option>
+                <option value="Ortopedia">Ortopedia</option>
+            </select>
+        </div>
+    `;
+
+    // Pergunta 4: Preferência de medida
+    htmlContent += `
+        <div class="pergunta" id="pergunta-medida">
+            <p>Tem alguma preferência de medida para o travesseiro?</p>
+            <select id="resposta-medida" class="resposta">
+                <option value="">Selecione</option>
+                <option value="48cm x 68cm">48cm x 68cm</option>
+                <option value="50cm x 70cm">50cm x 70cm</option>
+                <option value="40cm x 1,30m">40cm x 1,30m</option>
+                <option value="35cm x 50cm">35cm x 50cm</option>
+                <option value="60cm x 100cm">60cm x 100cm</option>
+                <option value="50cm x 90cm">50cm x 90cm</option>
+                <option value="30cm x 40cm">30cm x 40cm</option>
+                <option value="45cm x 65cm">45cm x 65cm</option>
+            </select>
+        </div>
+    `;
+
+
+    
+
+    // Botão para submeter as respostas
+    htmlContent += '<button onclick="avaliarRespostas()">Encontre meu travesseiro ideal</button>';
+
+    questionarioDiv.innerHTML = htmlContent;
+}
+
+async function avaliarRespostas() {
+    const material = document.getElementById('resposta-material').value;
+    const posicao = document.getElementById('resposta-posicao').value;
+    const conforto = document.getElementById('resposta-conforto').value;
+    const medida = document.getElementById('resposta-medida').value;
+
+    const response = await fetch('travesseiros.json');
+    const data = await response.json();
+
+    const recomendacoes = data.travesseiros.filter(travesseiro => 
+        (travesseiro.linha.includes(conforto) || conforto === '') &&
+        (travesseiro.posicao === posicao || posicao === '') &&
+        (travesseiro.nome.toLowerCase().includes(material.toLowerCase()) || material === '') &&
+        (travesseiro.dimensao === medida || medida === '')
+    );
+
+    if (recomendacoes.length === 0) {
+        const recomendacaoAlternativa = encontrarTravesseiroAlternativo(data.travesseiros, posicao, conforto, medida);
+        mostrarRecomendacaoAlternativa(recomendacaoAlternativa);
+    } else {
+        mostrarRecomendacoes(recomendacoes);
+    }
+}
+
+function encontrarTravesseiroAlternativo(travesseiros, posicao, conforto, medida) {
+    return travesseiros.find(travesseiro => 
+        (travesseiro.posicao === posicao || posicao === '') &&
+        (travesseiro.linha.includes(conforto) || conforto === '') &&
+        (travesseiro.dimensao === medida || medida === '')
+    );
+}
+
+function mostrarRecomendacoes(recomendacoes) {
+    const recomendacaoDiv = document.getElementById('recomendacao');
+    let htmlContent = '';
+
+    if (recomendacoes.length === 0) {
+        htmlContent = '<p class="fora-de-estoque">Produto fora de estoque em destaque</p>';
+    } else {
+        htmlContent += '<h3>Recomendações para você:</h3>';
+        recomendacoes.forEach(rec => {
+            htmlContent += `<p>${rec.nome} - Posição: ${rec.posicao}, Linha: ${rec.linha} - ${rec.link ? `<a href="${rec.link}" target="_blank">Veja mais</a>` : '<span class="fora-de-estoque">Fora de Estoque</span>'}</p>`;
+        });
+    }
+    recomendacaoDiv.innerHTML = htmlContent;
+}
+
+function mostrarRecomendacaoAlternativa(travesseiro) {
+    const recomendacaoDiv = document.getElementById('recomendacao');
+    let htmlContent = '';
+
+    if (travesseiro) {
+        htmlContent = `<p>Não encontramos um travesseiro com todas as suas especificações, mas sugerimos o seguinte:</p>
+                        <p>${travesseiro.nome} - Posição: ${travesseiro.posicao}, Linha: ${travesseiro.linha} - <a href="${travesseiro.link}" target="_blank">Veja mais</a></p>`;
+    } else {
+        htmlContent = '<p>Não encontramos nenhum travesseiro que atenda às suas preferências. Por favor, ajuste suas respostas e tente novamente.</p>';
+    }
+    recomendacaoDiv.innerHTML = htmlContent;
+}
+
+document.addEventListener('DOMContentLoaded', carregarTravesseiros);
+</script>
+</body>
+</html>
